@@ -23,6 +23,7 @@
   "devDependencies": {
     "@nitrostack/cli": "^1.0.15",
     "@types/node": "^22.10.0",
+    "tsx": "^4.23.1",
     "typescript": "^5.3.3"
   },
   "author": "Team 404 : Sleep Not Found",
