@@ -18,20 +18,24 @@ export class MatchTradesTools {
     },
   })
   async matchTrades(
-    input: { systemATrades: Trade[]; systemBTrades: Trade[] },
+    input: { systemATrades: Trade[] | string; systemBTrades: Trade[] | string },
     ctx: ExecutionContext
   ): Promise<MatchTradesOutput> {
+    const systemATrades: Trade[] =
+      typeof input.systemATrades === 'string' ? JSON.parse(input.systemATrades) : input.systemATrades;
+    const systemBTrades: Trade[] =
+      typeof input.systemBTrades === 'string' ? JSON.parse(input.systemBTrades) : input.systemBTrades;
+
     ctx.logger.info('Matching trades', {
-      countA: input.systemATrades.length,
-      countB: input.systemBTrades.length,
+      countA: systemATrades.length,
+      countB: systemBTrades.length,
     });
 
     const breaks: Break[] = [];
     const matchedBSymbols = new Set<string>();
 
-    for (const tradeA of input.systemATrades) {
-      const tradeB = input.systemBTrades.find((t) => t.symbol === tradeA.symbol);
-
+    for (const tradeA of systemATrades) {
+      const tradeB = systemBTrades.find((t) => t.symbol === tradeA.symbol);
       if (!tradeB) {
         breaks.push({
           breakId: `break-${tradeA.symbol}`,
@@ -41,12 +45,9 @@ export class MatchTradesTools {
         });
         continue;
       }
-
       matchedBSymbols.add(tradeB.symbol);
-
       const priceDiff = Math.abs(tradeA.price - tradeB.price);
       const quantityDiff = Math.abs(tradeA.quantity - tradeB.quantity);
-
       if (priceDiff > PRICE_TOLERANCE || quantityDiff > QUANTITY_TOLERANCE) {
         const parts: string[] = [];
         if (priceDiff > PRICE_TOLERANCE) {
@@ -64,7 +65,7 @@ export class MatchTradesTools {
       }
     }
 
-    for (const tradeB of input.systemBTrades) {
+    for (const tradeB of systemBTrades) {
       if (!matchedBSymbols.has(tradeB.symbol)) {
         breaks.push({
           breakId: `break-${tradeB.symbol}`,
