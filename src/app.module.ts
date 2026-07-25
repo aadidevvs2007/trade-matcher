@@ -5,6 +5,8 @@ import { SettlementModule } from './modules/settlement/settlement.module.js';
 import { InvestigateModule } from './modules/investigate/investigate.module.js';
 import { ResolveModule } from './modules/resolve/resolve.module.js';
 import { MatchTradesModule } from './modules/match-trades/match-trades.module.js';
+import { CorrectionModule } from './modules/correction/correction.module.js';
+import { ReconciliationModule } from './modules/reconciliation/reconciliation.module.js';
 
 @McpApp({
   module: AppModule,
@@ -15,6 +17,16 @@ import { MatchTradesModule } from './modules/match-trades/match-trades.module.js
 })
 @Module({
   name: 'app',
-  imports: [ConfigModule.forRoot(), TradesModule, FxModule, SettlementModule, InvestigateModule, ResolveModule, MatchTradesModule],
+  imports: [
+    ConfigModule.forRoot(),
+    TradesModule,
+    FxModule,
+    SettlementModule,
+    InvestigateModule,
+    ResolveModule,
+    MatchTradesModule,
+    CorrectionModule,
+    ReconciliationModule,
+  ],
 })
 export class AppModule {}

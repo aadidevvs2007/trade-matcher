@@ -24,7 +24,9 @@ export class SettlementTools {
   async getSettlementWindow(input: { instrumentType: string; hour: number }, ctx: ExecutionContext) {
     ctx.logger.info('Checking settlement window', { instrumentType: input.instrumentType, hour: input.hour });
     const window = SETTLEMENT_WINDOWS[input.instrumentType];
-    if (!window) return { found: false, message: `No settlement data for ${input.instrumentType}` };
+    if (!window) {
+      return { found: false, message: `No settlement data for ${input.instrumentType}` };
+    }
     const withinWindow = input.hour >= window.startHour && input.hour < window.endHour;
     return { found: true, withinWindow, window: window.cycle };
   }
