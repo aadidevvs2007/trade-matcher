@@ -54,8 +54,12 @@ export class InvestigateTools {
   ): Promise<InvestigateBreakOutput> {
     ctx.logger.info('Investigating break', { breakId: input.breakId });
 
-    const systemPrompt = `You are a trade reconciliation analyst. You will be given two trade records that don't match and a description of the discrepancy. Use the get_fx_rate_at_time tool if the discrepancy could be explained by FX rate timing differences. Respond ONLY with JSON matching this shape, no other text:
-{"breakId": string, "explained": boolean, "reason": string, "confidence": "low"|"medium"|"high"}`;
+    const systemPrompt = `You are a trade reconciliation analyst. You will be given two trade records that don't match and a description of the discrepancy.
+
+You MUST call get_fx_rate_at_time for BOTH trade timestamps before concluding — never guess or assume FX movement without checking the actual rates. Compare the returned rates numerically against the price difference in the trades to justify your conclusion.
+
+Respond ONLY with JSON matching this shape, no other text:
+{"breakId": string, "explained": boolean, "reason": string (must cite the specific rate values you retrieved), "confidence": "low"|"medium"|"high"}`;
 
     const userMsg = `Break ID: ${input.breakId}
 Trade A: ${JSON.stringify(input.tradeA)}
