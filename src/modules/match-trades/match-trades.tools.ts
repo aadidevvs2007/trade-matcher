@@ -1,4 +1,4 @@
-import { ToolDecorator as Tool, ExecutionContext, z } from '@nitrostack/core';
+import { ToolDecorator as Tool, ExecutionContext, z, Widget } from '@nitrostack/core';
 import { Trade, Break, MatchTradesOutput } from './match-trades.types.js';
 
 const PRICE_TOLERANCE = 0.01;
@@ -12,11 +12,28 @@ export class MatchTradesTools {
       systemATrades: z.array(Trade).describe('Trade records from System A'),
       systemBTrades: z.array(Trade).describe('Trade records from System B'),
     }),
+    invocation: {
+      invoking: 'Matching trades across systems...',
+      invoked: 'Trade matching complete',
+    },
     examples: {
-      request: { systemATrades: [], systemBTrades: [] },
-      response: { breaks: [] },
+      request: {
+        systemATrades: [{ symbol: 'INFY', price: 1500.5, quantity: 100 }],
+        systemBTrades: [{ symbol: 'INFY', price: 1500.5, quantity: 90 }],
+      },
+      response: {
+        breaks: [
+          {
+            breakId: 'break-INFY',
+            tradeA: { symbol: 'INFY', price: 1500.5, quantity: 100 },
+            tradeB: { symbol: 'INFY', price: 1500.5, quantity: 90 },
+            discrepancy: 'Mismatch on INFY: quantity 100 vs 90',
+          },
+        ],
+      },
     },
   })
+  @Widget('trade-dashboard')
   async matchTrades(
     input: { systemATrades: Trade[] | string; systemBTrades: Trade[] | string },
     ctx: ExecutionContext
