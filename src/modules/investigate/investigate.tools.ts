@@ -1,19 +1,25 @@
 import { ToolDecorator as Tool, ExecutionContext, z } from '@nitrostack/core';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { InvestigateBreakOutput } from './investigate.types.js';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: 'https://api.groq.com/openai/v1',
+});
 
 const FX_TOOL_DEF = {
-  name: 'get_fx_rate_at_time',
-  description: 'Get the FX rate for a currency pair at a given hour-level timestamp',
-  input_schema: {
-    type: 'object' as const,
-    properties: {
-      pair: { type: 'string', description: 'Currency pair like USD/EUR' },
-      timestamp: { type: 'string', description: 'ISO timestamp, hour precision' },
+  type: 'function' as const,
+  function: {
+    name: 'get_fx_rate_at_time',
+    description: 'Get the FX rate for a currency pair at a given hour-level timestamp',
+    parameters: {
+      type: 'object',
+      properties: {
+        pair: { type: 'string', description: 'Currency pair like USD/EUR' },
+        timestamp: { type: 'string', description: 'ISO timestamp, hour precision' },
+      },
+      required: ['pair', 'timestamp'],
     },
-    required: ['pair', 'timestamp'],
   },
 };
 
@@ -56,32 +62,40 @@ Trade A: ${JSON.stringify(input.tradeA)}
 Trade B: ${JSON.stringify(input.tradeB)}
 Discrepancy: ${input.discrepancy}`;
 
-    const messages: Anthropic.MessageParam[] = [{ role: 'user', content: userMsg }];
+    const messages: any[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userMsg },
+    ];
+
     let finalText = '';
 
     for (let turn = 0; turn < 4; turn++) {
-      const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 1000,
-        system: systemPrompt,
+      const response = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
         messages,
         tools: [FX_TOOL_DEF],
       });
 
-      const toolUse = response.content.find((b) => b.type === 'tool_use');
+      const choice = response.choices[0];
+      const toolCalls = choice.message.tool_calls;
 
-      if (!toolUse) {
-        const textBlock = response.content.find((b) => b.type === 'text');
-        finalText = textBlock && 'text' in textBlock ? textBlock.text : '';
+      if (!toolCalls || toolCalls.length === 0) {
+        finalText = choice.message.content ?? '';
         break;
       }
 
-      messages.push({ role: 'assistant', content: response.content });
-      const toolResult = callFxTool(toolUse.input as { pair: string; timestamp: string });
-      messages.push({
-        role: 'user',
-        content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: JSON.stringify(toolResult) }],
-      });
+      messages.push(choice.message);
+
+      for (const toolCall of toolCalls) {
+        if (toolCall.type !== 'function') continue;
+        const args = JSON.parse(toolCall.function.arguments);
+        const toolResult = callFxTool(args);
+        messages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(toolResult),
+        });
+      }
     }
 
     try {
