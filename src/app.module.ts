@@ -3,6 +3,7 @@ import { TradesModule } from './modules/trades/trades.module.js';
 import { FxModule } from './modules/fx/fx.module.js';
 import { SettlementModule } from './modules/settlement/settlement.module.js';
 import { InvestigateModule } from './modules/investigate/investigate.module.js';
+import { ResolveModule } from './modules/resolve/resolve.module.js';
 
 @McpApp({
   module: AppModule,
@@ -13,6 +14,6 @@ import { InvestigateModule } from './modules/investigate/investigate.module.js';
 })
 @Module({
   name: 'app',
-  imports: [ConfigModule.forRoot(), TradesModule, FxModule, SettlementModule, InvestigateModule],
+  imports: [ConfigModule.forRoot(), TradesModule, FxModule, SettlementModule, InvestigateModule, ResolveModule],
 })
 export class AppModule {}
