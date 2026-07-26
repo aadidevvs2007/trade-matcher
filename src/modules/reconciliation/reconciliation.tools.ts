@@ -7,7 +7,7 @@ import { ResolveTools } from '../resolve/resolve.tools.js';
 import { CorrectionTools } from '../correction/correction.tools.js';
 import { RunReconciliationOutput, ReconciledBreak } from './reconciliation.types.js';
 
-const groqLimit = pLimit(1);
+const groqLimit = pLimit(2);
 
 export class ReconciliationTools {
   @Tool({
